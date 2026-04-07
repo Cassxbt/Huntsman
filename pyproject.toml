@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "huntsman-mcp"
+version = "0.2.0"
+description = "MCP server for LinkedIn scraping, Reddit intelligence, resume conversion, and job research. Works with Claude Code, Codex CLI, ChatGPT, and any MCP-compatible AI agent."
+authors = [{ name = "cassxbt" }]
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11"
+keywords = ["mcp", "linkedin", "job-search", "resume", "ai-agent", "claude", "codex"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+]
+dependencies = [
+    "fastmcp>=2.0",
+    "httpx>=0.27",
+    "patchright>=1.50",
+    "python-docx>=1.1",
+]
+
+[project.scripts]
+huntsman-mcp = "huntsman_mcp.server:cli"
+job-agent-mcp = "huntsman_mcp.server:cli"
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "huntsman_mcp/",
+    "skill/",
+    "config/",
+]
+
+[project.urls]
+Homepage = "https://github.com/cassxbt/huntsman"
+Issues = "https://github.com/cassxbt/huntsman/issues"

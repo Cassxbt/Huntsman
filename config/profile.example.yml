@@ -1,0 +1,86 @@
+# Huntsman — User Profile
+# Copy this file to config/profile.yml and fill in your details.
+# The agent reads this on every session to personalize evaluations,
+# resume tailoring, and outreach.
+
+name: "Your Name"
+email: "your@email.com"
+linkedin_username: "your-linkedin-username"
+
+# Target roles — what you're looking for.
+# List in priority order. The agent uses this to score job fit.
+target_roles:
+  - "Senior Full-Stack Developer"
+  - "AI Agent Developer"
+  - "Protocol Engineer"
+
+# Domains you work in. Used for niche scoring.
+domains:
+  - "Web3"
+  - "AI/ML"
+  - "FinTech"
+
+# Your primary archetype. Shapes how the agent frames your narrative.
+# Options: builder, researcher, leader, specialist, generalist
+archetype: "builder"
+
+# Tech stack — your real skills. The agent uses this to match against JDs.
+# List in order of strength (strongest first).
+tech_stack:
+  primary:
+    - "TypeScript"
+    - "React"
+    - "Next.js"
+    - "Node.js"
+    - "Python"
+  secondary:
+    - "Solidity"
+    - "Rust"
+    - "PostgreSQL"
+    - "Docker"
+  familiar:
+    - "Go"
+    - "AWS"
+    - "Terraform"
+
+# Compensation targets (annual, USD).
+comp:
+  minimum: 80000
+  preferred: 120000
+  currency: "USD"
+
+# Hard-no filters. The agent will auto-flag jobs matching these.
+# Score penalty is applied but the agent still evaluates (you decide).
+hard_nos:
+  - "junior in title"
+  - "no remote option"
+  - "unpaid"
+  - "requires security clearance"
+
+# Location and work preferences.
+location:
+  current: "San Francisco, CA"
+  willing_to_relocate: false
+  remote_only: true
+  timezone_range: "UTC-8 to UTC+1"
+
+# Hero metrics — your best proof points. Used in outreach, cover letters,
+# and the evaluation's CV-match analysis. Be specific.
+hero_metrics:
+  - "Reduced API latency by 40% across 12 microservices"
+  - "Won first place at a major hackathon"
+  - "Shipped a production app serving 50K+ monthly active users"
+  - "Built and open-sourced a developer tool with 500+ GitHub stars"
+
+# Your exit story — why you're looking. One sentence.
+# Used to frame outreach and cover letters honestly.
+exit_story: "Looking for a team where I can build infrastructure that ships to real users at scale."
+
+# Subreddits the agent monitors for salary data, reviews, and market intel.
+# Defaults are provided; add niche-specific ones.
+reddit_watchlist:
+  - "cscareerquestions"
+  - "ExperiencedDevs"
+  - "recruitinghell"
+  - "webdev"
+  - "cryptocurrency"

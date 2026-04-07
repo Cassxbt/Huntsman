@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+
+# uv
+.uv/
+uv.lock
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Session data — never commit (stored in ~/.local/share/huntsman-mcp/ at runtime,
+# but guard against anyone accidentally pointing the config here)
+browser_profile/
+*.json.bak
+
+# User private data — never commit
+config/profile.yml
+cv.md
+data/applications.md
+data/story-bank.md
