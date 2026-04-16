@@ -406,8 +406,6 @@ async def convert_resume(
     }
 
 
-# Profile and tracker tools (local file I/O)
-
 @mcp.tool(
     title="Load Profile",
     annotations={"readOnlyHint": True},
@@ -498,18 +496,15 @@ async def write_tracker(
     today = datetime.date.today().isoformat()
     existing = tracker_path.read_text(encoding="utf-8") if tracker_path.exists() else ""
 
-    # Determine next entry number and check for existing row.
     lines = existing.splitlines()
     entry_num = 1
     updated = False
     new_lines: list[str] = []
 
     for line in lines:
-        # Count data rows to determine next #.
         if line.startswith("|") and not line.startswith("| #") and "---" not in line:
             entry_num += 1
 
-        # If this row matches company+role, update it.
         if f"| {company} |" in line and f"| {role} |" in line:
             new_lines.append(
                 f"| {entry_num - 1} | {company} | {role} | {score:.1f} "
