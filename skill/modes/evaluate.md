@@ -149,8 +149,8 @@ STAR+R format:
 Rules:
 - Every story must map to a specific JD requirement. State the mapping explicitly.
 - Stories must come from real experience in cv.md. Do not invent scenarios.
-- If the user's story bank exists (`data/story-bank.md`), check for existing stories that apply before generating new ones. Reuse and refine, don't regenerate.
-- Append any new stories to `data/story-bank.md` for future sessions.
+- Read `data/story-bank.md` if it exists to check for applicable stories before generating new ones. Reuse and refine, don't regenerate.
+- Append any new stories via `write_story_bank(story_markdown)` — never write the file directly.
 
 ---
 

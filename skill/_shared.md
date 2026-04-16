@@ -56,6 +56,13 @@ Score >= 4.5  → Full pipeline: report + CV + outreach + interview prep
 8. 15–25 keywords total. No single keyword repeated more than 4–5 times.
 9. Every bullet: [Strong Verb] + [What] + [Quantified Result].
 10. No em dashes. No AI-pattern language.
+11. Roles and projects in reverse-chronological order (most recent first). Never reorder by relevance.
+12. Consistent date format throughout: "Month YYYY – Month YYYY" (e.g., "Jan 2023 – Mar 2025"). Never mix formats within the same document.
+13. **Format by submission method:**
+    - ATS portal (Greenhouse, Lever, Workday, iCIMS, Taleo) → DOCX. These systems parse DOCX natively and more reliably than PDF.
+    - Direct email to a human or LinkedIn message → PDF. Preserves layout exactly.
+    - LinkedIn Easy Apply → PDF. LinkedIn renders PDFs cleanly in its viewer.
+    - When in doubt: ask the user how they are submitting before converting.
 
 ---
 
@@ -95,18 +102,10 @@ Resume conversion output defaults to `~/Downloads/`. Override with the `HUNTSMAN
 
 ## Tracker Format
 
-The agent maintains `data/applications.md` as a running log of all evaluated jobs.
-
-Table format:
-```markdown
-| # | Company | Role | Score | Status | Date | Report |
-|---|---------|------|-------|--------|------|--------|
-| 1 | Acme Corp | Senior Engineer | 4.2 | Evaluated | 2026-01-15 | See below |
-```
+After every evaluation, call `write_tracker(company, role, score, status, notes, report_markdown)`.
+Never write to `data/applications.md` directly — the tool handles dedup and formatting.
 
 Canonical statuses: `Evaluated`, `CV Sent`, `Applied`, `Interview`, `Offer`, `Rejected`, `Skipped`, `Withdrawn`.
 
-Rules:
-- Append new entries. Never reorder or delete existing entries.
-- Dedup by company + role. If the same job is evaluated twice, update the existing row.
-- Report content goes below the table under a `## #N — Company: Role` heading.
+Pass the full evaluation report (Blocks A-D output) as `report_markdown`.
+Pass a one-line summary as `notes` for the table row.

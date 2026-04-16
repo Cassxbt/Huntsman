@@ -45,6 +45,11 @@ If `huntsman-mcp` is installed and configured:
 **Resume conversion:**
 - `convert_resume(markdown_content, output_format, filename)` — convert resume to PDF or DOCX
 
+**Profile and tracker (local file I/O — always use these instead of reading files directly):**
+- `load_profile()` — reads config/profile.yml and cv.md; returns both as strings plus a `missing` list
+- `write_tracker(company, role, score, status, notes, report_markdown)` — appends/updates a row in data/applications.md
+- `write_story_bank(story_markdown)` — appends STAR+R stories to data/story-bank.md
+
 If MCP tools are unavailable, ask the user to paste the relevant content and continue.
 
 ---
@@ -53,9 +58,10 @@ If MCP tools are unavailable, ask the user to paste the relevant content and con
 
 On every new session, before responding to the user's request:
 
-1. Check for `config/profile.yml`. If missing, run the **Onboarding Flow** below.
-2. Check for `cv.md` in the project root. If missing, ask the user to describe their experience or paste a resume. Save as `cv.md`.
-3. If both exist, read them silently and proceed to the user's request.
+1. Call `load_profile()`. It returns `profile_yml`, `cv_md`, and `missing`.
+2. If `config/profile.yml` is in `missing` → run the **Onboarding Flow** below.
+3. If `cv.md` is in `missing` → ask the user to describe their experience or paste a resume. Save as `cv.md`.
+4. If both are loaded, proceed to the user's request silently.
 
 Do not mention these checks to the user unless something is missing.
 
@@ -168,7 +174,7 @@ get_linkedin_profile(linkedin_username, sections="experience,education,skills,co
 
 **ABOUT (P0 if empty)**
 - Min 40 words for All-Star status (required for full recruiter search visibility).
-- LinkedIn's 360Brew AI (150B parameter, January 2025) reads this to classify expertise. Write about your actual specialty.
+- LinkedIn's ranking system classifies expertise from this section. Write about your actual specialty, not a generic summary.
 - Structure: 1 positioning sentence, 3-5 achievement bullets with numbers, tech stack sentence, open to [roles] (remote), contact email.
 - No filler language. Numbers beat adjectives. No em dashes. No AI-pattern language.
 
@@ -180,14 +186,13 @@ get_linkedin_profile(linkedin_username, sections="experience,education,skills,co
 - No em dashes. No passive voice.
 
 **SKILLS (P1)**
-- 5+ skills = 27x more likely to appear in recruiter searches (LinkedIn data)
+- 5+ skills materially increases recruiter search visibility — LinkedIn ranks fuller profiles higher.
 - Top 3 pinned skills appear on profile card. Pin highest-demand keywords.
 - LinkedIn Recruiter has a "passed skill assessment" filter.
 - Priority assessments: JavaScript, React.js, TypeScript, Python, Node.js, Git
 
 **OPEN TO WORK (P1 if job-seeking)**
-- Green badge = 3x baseline recruiter response rate (5% to 15%)
-- Use Recruiters Only setting.
+- Signals active availability to recruiters — use Recruiters Only to avoid alerting current employer.
 - Location: always "Remote" when targeting international roles.
 - List specific job titles matching recruiter search terms.
 
@@ -198,18 +203,18 @@ get_linkedin_profile(linkedin_username, sections="experience,education,skills,co
 - First item gets ~80% of clicks. Order by strategic priority.
 - 4-6 items max. Best performers: GitHub, live project demo, prize certificate.
 
-**PROFILE URL (P2)** — Change from default ID-number URL.
-**VERIFICATION BADGE (P2)** — ~20% boost in recruiter search ranking.
+**PROFILE URL (P2)** — Change from default ID-number URL to linkedin.com/in/yourname.
+**VERIFICATION BADGE (P2)** — Adds a trust signal; LinkedIn surfaces verified profiles more consistently in search.
 
 **CONNECTIONS (P2)**
 - Below 500 = smaller 2nd-degree pool.
 - Build order: recruiters in your domain first, then developers at target companies.
 
 **ACTIVITY (P2)**
-- 360Brew: reads profile + posts to classify expertise. Post off-niche = reach suppressed.
-- Best format: native PDF/carousel (6.6-7.0% avg engagement, 278% more reach than video)
-- Optimal: 3-5x/week, never more than 1x/24hrs, Tuesday-Thursday 8-10am and 12-1pm
-- External links in first comment, never in post body (~60% reach penalty)
+- LinkedIn's algorithm classifies expertise from posts — posting off-niche suppresses reach in your target domain.
+- Native documents and carousels consistently outperform external link posts in organic reach.
+- Post 2-4x per week; never more than once per 24 hours. Mid-week mornings perform best.
+- Put external links in the first comment, not the post body — LinkedIn deprioritizes posts that push users off-platform.
 - Feed weight: Saves (highest) > Dwell time > See more > Comments > Shares > Likes (lowest)
 
 **Output format:**
