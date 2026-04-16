@@ -1,6 +1,6 @@
 # Huntsman
 
-MCP server for score-gated job hunting. LinkedIn scraping, Reddit salary intel, and resume conversion — only for roles that clear the 10-dimension threshold.
+MCP server for score-gated job hunting — scrapes LinkedIn and Reddit, converts resumes, and only generates tailored materials for roles that clear the 10-dimension threshold.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/huntsman-mcp?style=flat-square&label=PyPI)](https://pypi.org/project/huntsman-mcp/)
@@ -10,15 +10,15 @@ MCP server for score-gated job hunting. LinkedIn scraping, Reddit salary intel, 
 
 ## Overview
 
-Job searching is a volume game played badly. Most applicants send the same resume to every role and treat rejection as a numbers problem. Huntsman flips that: it scores every job on 10 weighted dimensions before generating a single line of tailored material, so you apply to fewer roles with higher precision. The MCP server handles data acquisition across 12 tools — LinkedIn, Reddit, and resume conversion. The skill layer runs the evaluation engine, scoring, and outreach workflows entirely inside your LLM.
+Job searching is a volume game played badly. Huntsman flips that: it scores every job on 10 weighted dimensions before generating a single line of tailored material, so you apply to fewer roles with higher precision. The MCP server handles data acquisition across 12 tools — LinkedIn, Reddit, and resume conversion. The skill layer runs the evaluation engine, scoring, and outreach workflows entirely inside your LLM.
 
 ## Features
 
 - **10-dimension scoring** — weighted matrix (North Star alignment, CV match, level fit, compensation, growth, remote quality, reputation, tech stack, speed to offer, culture) produces a 0–5 score with three decision gates
 - **Score-gated pipeline** — below 3.0 gets a skip recommendation; 3.0–4.4 gets a tailored CV; 4.5+ gets the full pipeline including outreach drafts and STAR+R interview prep
-- **LinkedIn scraping** — profiles, companies, jobs, job search with filters, and people search via Patchright with jitter-based navigation
-- **Reddit intelligence** — salary threads, interview reports, and company reviews from cscareerquestions, ExperiencedDevs, and domain subreddits; no authentication required
-- **ATS-compliant resume conversion** — Markdown to PDF (Chromium) or DOCX (python-docx), single-column layout, selectable UTF-8 text, standard section headers; DOCX for ATS portals, PDF for direct sends
+- **LinkedIn scraping** — scrapes profiles, companies, jobs, job search with filters, and people search via Patchright with jitter-based navigation
+- **Reddit intelligence** — pulls salary threads, interview reports, and company reviews from cscareerquestions, ExperiencedDevs, and domain subreddits; no authentication required
+- **ATS-compliant resume conversion** — converts Markdown to PDF (Chromium) or DOCX (python-docx), single-column layout, selectable UTF-8 text, standard section headers; DOCX for ATS portals, PDF for direct sends
 - **Persistent session tools** — `load_profile`, `write_tracker`, and `write_story_bank` keep your profile, application log, and STAR+R story bank consistent across sessions without relying on the LLM to write files correctly
 - **72 passing tests** — scraper helpers, converter sanitizer, and all file I/O tools covered
 
@@ -117,7 +117,7 @@ Then in Claude Code:
 
 ```
 /huntsman evaluate this job: https://linkedin.com/jobs/view/4252026496
-/huntsman tailor my resume for this role: [paste JD]
+/huntsman tailor my resume for this role: Senior Solidity Engineer at Coinbase
 /huntsman optimize my LinkedIn for senior full-stack roles
 /huntsman research Stripe
 /huntsman prep for my interview at Coinbase for Protocol Engineer
