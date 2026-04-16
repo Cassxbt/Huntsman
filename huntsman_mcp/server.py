@@ -7,6 +7,9 @@ Tools exposed:
     search_linkedin_jobs   — job search with filters
     search_linkedin_people — people/recruiter search
     convert_resume         — Markdown → PDF or DOCX
+    load_profile           — read config/profile.yml and cv.md from project root
+    write_tracker          — append/update a row in data/applications.md
+    write_story_bank       — append STAR+R stories to data/story-bank.md
     search_reddit          — search Reddit posts (salary, interviews, reviews)
     get_reddit_post        — full post + comments
     get_reddit_subreddit   — browse a subreddit (hot/top/new)
@@ -18,6 +21,7 @@ CLI modes (not MCP server):
 """
 
 import asyncio
+import datetime
 import logging
 import sys
 from typing import Annotated, Any, NoReturn
@@ -28,6 +32,7 @@ from pydantic import Field
 
 from huntsman_mcp import __version__
 from huntsman_mcp.auth import ensure_logged_in, print_status, run_login
+from huntsman_mcp.config import get_project_dir
 from huntsman_mcp.exceptions import (
     AuthRequired,
     BrowserSetupError,
@@ -399,6 +404,176 @@ async def convert_resume(
         "file_size_bytes": output_path.stat().st_size,
         "format": fmt,
     }
+
+
+# Profile and tracker tools (local file I/O)
+
+@mcp.tool(
+    title="Load Profile",
+    annotations={"readOnlyHint": True},
+)
+async def load_profile(ctx: Context) -> dict[str, Any]:
+    """Load the user's profile and CV from the project directory.
+
+    Returns the raw contents of config/profile.yml and cv.md.
+    Call this at the start of every session instead of reading files directly —
+    the tool resolves paths reliably regardless of the agent's working directory.
+
+    Returns:
+        Dict with profile_yml (str or None), cv_md (str or None), and
+        missing (list of filenames that do not exist yet — triggers onboarding).
+    """
+    project = get_project_dir()
+    profile_path = project / "config" / "profile.yml"
+    cv_path = project / "cv.md"
+
+    result: dict[str, Any] = {"profile_yml": None, "cv_md": None, "missing": []}
+
+    if profile_path.exists():
+        result["profile_yml"] = profile_path.read_text(encoding="utf-8")
+    else:
+        result["missing"].append("config/profile.yml")
+
+    if cv_path.exists():
+        result["cv_md"] = cv_path.read_text(encoding="utf-8")
+    else:
+        result["missing"].append("cv.md")
+
+    return result
+
+
+_TRACKER_HEADER = (
+    "| # | Company | Role | Score | Status | Date | Notes |\n"
+    "|---|---------|------|-------|--------|------|-------|\n"
+)
+
+_VALID_TRACKER_STATUSES = frozenset(
+    ["Evaluated", "CV Sent", "Applied", "Interview", "Offer", "Rejected", "Skipped", "Withdrawn"]
+)
+
+
+@mcp.tool(
+    title="Write Tracker",
+    annotations={"readOnlyHint": False},
+)
+async def write_tracker(
+    company: str,
+    role: str,
+    score: Annotated[float, Field(ge=0.0, le=5.0)],
+    status: Annotated[
+        str,
+        Field(
+            description=(
+                "Evaluated | CV Sent | Applied | Interview | "
+                "Offer | Rejected | Skipped | Withdrawn"
+            )
+        ),
+    ],
+    ctx: Context,
+    notes: str = "",
+    report_markdown: str = "",
+) -> dict[str, Any]:
+    """Append a job evaluation to the applications tracker (data/applications.md).
+
+    Creates the file with the correct table header if it does not exist.
+    If an entry for this company + role combination already exists, its
+    status and score are updated in place.
+
+    Args:
+        company: Company name (e.g. 'Stripe').
+        role: Job title (e.g. 'Senior Solidity Engineer').
+        score: Weighted score from the 10-dimension matrix (0.0–5.0).
+        status: Canonical status string.
+        notes: Short inline note for the table row (optional).
+        report_markdown: Full evaluation report to append below the table (optional).
+    """
+    if status not in _VALID_TRACKER_STATUSES:
+        valid = ", ".join(sorted(_VALID_TRACKER_STATUSES))
+        raise ToolError(f"Invalid status {status!r}. Valid values: {valid}.")
+
+    project = get_project_dir()
+    tracker_path = project / "data" / "applications.md"
+    tracker_path.parent.mkdir(parents=True, exist_ok=True)
+
+    today = datetime.date.today().isoformat()
+    existing = tracker_path.read_text(encoding="utf-8") if tracker_path.exists() else ""
+
+    # Determine next entry number and check for existing row.
+    lines = existing.splitlines()
+    entry_num = 1
+    updated = False
+    new_lines: list[str] = []
+
+    for line in lines:
+        # Count data rows to determine next #.
+        if line.startswith("|") and not line.startswith("| #") and "---" not in line:
+            entry_num += 1
+
+        # If this row matches company+role, update it.
+        if f"| {company} |" in line and f"| {role} |" in line:
+            new_lines.append(
+                f"| {entry_num - 1} | {company} | {role} | {score:.1f} "
+                f"| {status} | {today} | {notes} |"
+            )
+            updated = True
+        else:
+            new_lines.append(line)
+
+    if not existing:
+        new_lines = [_TRACKER_HEADER.rstrip()]
+        entry_num = 1
+
+    if not updated:
+        row = f"| {entry_num} | {company} | {role} | {score:.1f} | {status} | {today} | {notes} |"
+        new_lines.append(row)
+
+    content = "\n".join(new_lines)
+
+    if report_markdown.strip():
+        report_heading = f"\n\n## {entry_num if not updated else '(updated)'} — {company}: {role}\n\n"
+        content += report_heading + report_markdown.strip()
+
+    tracker_path.write_text(content + "\n", encoding="utf-8")
+
+    return {
+        "tracker_path": str(tracker_path),
+        "entry": entry_num,
+        "action": "updated" if updated else "appended",
+    }
+
+
+@mcp.tool(
+    title="Write Story Bank",
+    annotations={"readOnlyHint": False},
+)
+async def write_story_bank(
+    story_markdown: str,
+    ctx: Context,
+) -> dict[str, Any]:
+    """Append one or more STAR+R stories to data/story-bank.md.
+
+    Creates the file if it does not exist. Stories are appended below
+    existing content so the bank accumulates across sessions.
+
+    Args:
+        story_markdown: One or more STAR+R stories in Markdown format.
+    """
+    if not story_markdown.strip():
+        raise ToolError("story_markdown is empty.")
+
+    project = get_project_dir()
+    story_path = project / "data" / "story-bank.md"
+    story_path.parent.mkdir(parents=True, exist_ok=True)
+
+    existing = story_path.read_text(encoding="utf-8") if story_path.exists() else ""
+
+    separator = "\n\n---\n\n" if existing.strip() else ""
+    story_path.write_text(
+        existing + separator + story_markdown.strip() + "\n",
+        encoding="utf-8",
+    )
+
+    return {"story_bank_path": str(story_path)}
 
 
 # Reddit tools (no auth required — uses public JSON API)

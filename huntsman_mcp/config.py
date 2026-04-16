@@ -1,5 +1,6 @@
 """Runtime configuration: paths, delays, and LinkedIn URL constants."""
 
+import os as _os
 from pathlib import Path
 
 # --- Storage ---
@@ -8,9 +9,18 @@ BROWSER_PROFILE_DIR = APP_DIR / "browser_profile"
 
 # Converted documents (PDFs, DOCXs) are written here by default.
 # Users can override via the HUNTSMAN_OUTPUT_DIR environment variable.
-import os as _os
 _output_env = _os.environ.get("HUNTSMAN_OUTPUT_DIR")
 OUTPUT_DIR = Path(_output_env) if _output_env else Path.home() / "Downloads"
+
+
+def get_project_dir() -> Path:
+    """Return the project root directory.
+
+    Evaluated at call time so the server can be started before the user
+    has cd'd to the project root. Override with HUNTSMAN_PROJECT_DIR.
+    """
+    env = _os.environ.get("HUNTSMAN_PROJECT_DIR")
+    return Path(env).resolve() if env else Path.cwd()
 
 # --- Timing ---
 # All delays have jitter applied at call sites (see scraper._jitter_sleep).
