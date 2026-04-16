@@ -406,6 +406,105 @@ async def convert_resume(
     }
 
 
+_TRACKER_HEADER = (
+    "| # | Company | Role | Score | Status | Date | Notes |\n"
+    "|---|---------|------|-------|--------|------|-------|"
+)
+
+_VALID_TRACKER_STATUSES = frozenset(
+    ["Evaluated", "CV Sent", "Applied", "Interview", "Offer", "Rejected", "Skipped", "Withdrawn"]
+)
+
+
+def _profile_load(project: "Path") -> dict[str, Any]:
+    profile_path = project / "config" / "profile.yml"
+    cv_path = project / "cv.md"
+    result: dict[str, Any] = {"profile_yml": None, "cv_md": None, "missing": []}
+    if profile_path.exists():
+        result["profile_yml"] = profile_path.read_text(encoding="utf-8")
+    else:
+        result["missing"].append("config/profile.yml")
+    if cv_path.exists():
+        result["cv_md"] = cv_path.read_text(encoding="utf-8")
+    else:
+        result["missing"].append("cv.md")
+    return result
+
+
+def _tracker_write(
+    project: "Path",
+    company: str,
+    role: str,
+    score: float,
+    status: str,
+    notes: str = "",
+    report_markdown: str = "",
+) -> dict[str, Any]:
+    if status not in _VALID_TRACKER_STATUSES:
+        valid = ", ".join(sorted(_VALID_TRACKER_STATUSES))
+        raise ValueError(f"Invalid status {status!r}. Valid values: {valid}.")
+
+    tracker_path = project / "data" / "applications.md"
+    tracker_path.parent.mkdir(parents=True, exist_ok=True)
+
+    today = datetime.date.today().isoformat()
+    existing = tracker_path.read_text(encoding="utf-8") if tracker_path.exists() else ""
+
+    lines = existing.splitlines()
+    entry_num = 1
+    updated = False
+    in_table = True
+    new_lines: list[str] = []
+
+    for line in lines:
+        if line.startswith("## "):
+            in_table = False
+        if in_table and line.startswith("|") and not line.startswith("| #") and "---" not in line:
+            entry_num += 1
+        if in_table and f"| {company} |" in line and f"| {role} |" in line:
+            new_lines.append(
+                f"| {entry_num - 1} | {company} | {role} | {score:.1f}"
+                f" | {status} | {today} | {notes} |"
+            )
+            updated = True
+        else:
+            new_lines.append(line)
+
+    if not existing:
+        new_lines = [_TRACKER_HEADER]
+        entry_num = 1
+
+    if not updated:
+        new_lines.append(
+            f"| {entry_num} | {company} | {role} | {score:.1f}"
+            f" | {status} | {today} | {notes} |"
+        )
+
+    content = "\n".join(new_lines)
+    if report_markdown.strip():
+        label = entry_num if not updated else "(updated)"
+        content += f"\n\n## {label} — {company}: {role}\n\n{report_markdown.strip()}"
+
+    tracker_path.write_text(content + "\n", encoding="utf-8")
+    return {
+        "tracker_path": str(tracker_path),
+        "entry": entry_num,
+        "action": "updated" if updated else "appended",
+    }
+
+
+def _story_bank_write(project: "Path", story_markdown: str) -> dict[str, Any]:
+    story_path = project / "data" / "story-bank.md"
+    story_path.parent.mkdir(parents=True, exist_ok=True)
+    existing = story_path.read_text(encoding="utf-8") if story_path.exists() else ""
+    separator = "\n\n---\n\n" if existing.strip() else ""
+    story_path.write_text(
+        existing + separator + story_markdown.strip() + "\n",
+        encoding="utf-8",
+    )
+    return {"story_bank_path": str(story_path)}
+
+
 @mcp.tool(
     title="Load Profile",
     annotations={"readOnlyHint": True},
@@ -421,33 +520,7 @@ async def load_profile(ctx: Context) -> dict[str, Any]:
         Dict with profile_yml (str or None), cv_md (str or None), and
         missing (list of filenames that do not exist yet — triggers onboarding).
     """
-    project = get_project_dir()
-    profile_path = project / "config" / "profile.yml"
-    cv_path = project / "cv.md"
-
-    result: dict[str, Any] = {"profile_yml": None, "cv_md": None, "missing": []}
-
-    if profile_path.exists():
-        result["profile_yml"] = profile_path.read_text(encoding="utf-8")
-    else:
-        result["missing"].append("config/profile.yml")
-
-    if cv_path.exists():
-        result["cv_md"] = cv_path.read_text(encoding="utf-8")
-    else:
-        result["missing"].append("cv.md")
-
-    return result
-
-
-_TRACKER_HEADER = (
-    "| # | Company | Role | Score | Status | Date | Notes |\n"
-    "|---|---------|------|-------|--------|------|-------|\n"
-)
-
-_VALID_TRACKER_STATUSES = frozenset(
-    ["Evaluated", "CV Sent", "Applied", "Interview", "Offer", "Rejected", "Skipped", "Withdrawn"]
-)
+    return _profile_load(get_project_dir())
 
 
 @mcp.tool(
@@ -485,56 +558,10 @@ async def write_tracker(
         notes: Short inline note for the table row (optional).
         report_markdown: Full evaluation report to append below the table (optional).
     """
-    if status not in _VALID_TRACKER_STATUSES:
-        valid = ", ".join(sorted(_VALID_TRACKER_STATUSES))
-        raise ToolError(f"Invalid status {status!r}. Valid values: {valid}.")
-
-    project = get_project_dir()
-    tracker_path = project / "data" / "applications.md"
-    tracker_path.parent.mkdir(parents=True, exist_ok=True)
-
-    today = datetime.date.today().isoformat()
-    existing = tracker_path.read_text(encoding="utf-8") if tracker_path.exists() else ""
-
-    lines = existing.splitlines()
-    entry_num = 1
-    updated = False
-    new_lines: list[str] = []
-
-    for line in lines:
-        if line.startswith("|") and not line.startswith("| #") and "---" not in line:
-            entry_num += 1
-
-        if f"| {company} |" in line and f"| {role} |" in line:
-            new_lines.append(
-                f"| {entry_num - 1} | {company} | {role} | {score:.1f} "
-                f"| {status} | {today} | {notes} |"
-            )
-            updated = True
-        else:
-            new_lines.append(line)
-
-    if not existing:
-        new_lines = [_TRACKER_HEADER.rstrip()]
-        entry_num = 1
-
-    if not updated:
-        row = f"| {entry_num} | {company} | {role} | {score:.1f} | {status} | {today} | {notes} |"
-        new_lines.append(row)
-
-    content = "\n".join(new_lines)
-
-    if report_markdown.strip():
-        report_heading = f"\n\n## {entry_num if not updated else '(updated)'} — {company}: {role}\n\n"
-        content += report_heading + report_markdown.strip()
-
-    tracker_path.write_text(content + "\n", encoding="utf-8")
-
-    return {
-        "tracker_path": str(tracker_path),
-        "entry": entry_num,
-        "action": "updated" if updated else "appended",
-    }
+    try:
+        return _tracker_write(get_project_dir(), company, role, score, status, notes, report_markdown)
+    except ValueError as exc:
+        raise ToolError(str(exc)) from exc
 
 
 @mcp.tool(
@@ -555,20 +582,7 @@ async def write_story_bank(
     """
     if not story_markdown.strip():
         raise ToolError("story_markdown is empty.")
-
-    project = get_project_dir()
-    story_path = project / "data" / "story-bank.md"
-    story_path.parent.mkdir(parents=True, exist_ok=True)
-
-    existing = story_path.read_text(encoding="utf-8") if story_path.exists() else ""
-
-    separator = "\n\n---\n\n" if existing.strip() else ""
-    story_path.write_text(
-        existing + separator + story_markdown.strip() + "\n",
-        encoding="utf-8",
-    )
-
-    return {"story_bank_path": str(story_path)}
+    return _story_bank_write(get_project_dir(), story_markdown)
 
 
 # Reddit tools (no auth required — uses public JSON API)
