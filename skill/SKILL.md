@@ -47,6 +47,7 @@ If `huntsman-mcp` is installed and configured:
 
 **Profile and tracker (local file I/O — always use these instead of reading files directly):**
 - `load_profile()` — reads config/profile.yml and cv.md; returns both as strings plus a `missing` list
+- `write_profile(yaml_content)` — writes config/profile.yml; call this at the end of the onboarding interview
 - `write_tracker(company, role, score, status, notes, report_markdown)` — appends/updates a row in data/applications.md
 - `write_story_bank(story_markdown)` — appends STAR+R stories to data/story-bank.md
 
@@ -69,23 +70,7 @@ Do not mention these checks to the user unless something is missing.
 
 ## Onboarding Flow (first-time setup only)
 
-If `config/profile.yml` does not exist, run this before doing any work:
-
-"I need to set up your profile so I can personalize everything. This takes 2 minutes and only happens once."
-
-Ask these questions conversationally (not as a numbered form):
-1. What's your name?
-2. What roles are you targeting? (e.g., "Senior Full-Stack Developer", "Protocol Engineer")
-3. What domains do you work in? (e.g., Web3, AI/ML, FinTech)
-4. What's your primary tech stack? Split into: strong, working knowledge, familiar.
-5. What's your compensation target? (min and preferred, currency)
-6. Any hard deal-breakers? (e.g., "no junior titles", "must be remote")
-7. Where are you based? Willing to relocate? Remote only?
-8. What's your best proof point — the one thing that makes you stand out? (A metric, a prize, a shipped product)
-9. Why are you looking? (One sentence — your exit story)
-
-Save answers to `config/profile.yml` using the format from `config/profile.example.yml`.
-Then continue with the user's original request.
+If `config/profile.yml` is in the `missing` list from `load_profile()`, read `skill/modes/onboarding.md` and follow it in full before doing any other work.
 
 ---
 
