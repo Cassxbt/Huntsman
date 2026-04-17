@@ -17,10 +17,6 @@ from huntsman_mcp.config import (
 from huntsman_mcp.exceptions import ScrapingError
 
 
-# ---------------------------------------------------------------------------
-# _path_matches_prefix
-# ---------------------------------------------------------------------------
-
 class TestPathMatchesPrefix:
     def test_exact_match(self):
         assert _path_matches_prefix("/in/cassxbt", "/in/cassxbt")
@@ -62,10 +58,6 @@ class TestPathMatchesPrefix:
         )
 
 
-# ---------------------------------------------------------------------------
-# _lookup
-# ---------------------------------------------------------------------------
-
 class TestLookup:
     def test_valid_date_posted(self):
         assert _lookup("past_week", DATE_POSTED_MAP, "date_posted") == "r604800"
@@ -85,10 +77,6 @@ class TestLookup:
         with pytest.raises(ScrapingError, match="past_hour"):
             _lookup("bad_value", DATE_POSTED_MAP, "date_posted")
 
-
-# ---------------------------------------------------------------------------
-# _normalize_csv_filter
-# ---------------------------------------------------------------------------
 
 class TestNormalizeCsvFilter:
     def test_single_valid_job_type(self):
@@ -123,10 +111,6 @@ class TestNormalizeCsvFilter:
             result = _normalize_csv_filter(key, JOB_TYPE_MAP, "job_type")
             assert result == JOB_TYPE_MAP[key]
 
-
-# ---------------------------------------------------------------------------
-# _strip_noise
-# ---------------------------------------------------------------------------
 
 class TestStripNoise:
     def test_plain_content_preserved(self):

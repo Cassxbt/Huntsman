@@ -5,10 +5,6 @@ from pathlib import Path
 from huntsman_mcp.server import _profile_load, _profile_write, _tracker_write, _story_bank_write
 
 
-# ---------------------------------------------------------------------------
-# _tracker_write
-# ---------------------------------------------------------------------------
-
 class TestTrackerWrite:
     def test_creates_file_with_header(self, tmp_path):
         _tracker_write(tmp_path, "Stripe", "Senior Engineer", 4.2, "Evaluated")
@@ -70,10 +66,6 @@ class TestTrackerWrite:
         assert (tmp_path / "data" / "applications.md").exists()
 
 
-# ---------------------------------------------------------------------------
-# _story_bank_write
-# ---------------------------------------------------------------------------
-
 class TestStoryBankWrite:
     def test_creates_file_on_first_write(self, tmp_path):
         _story_bank_write(tmp_path, "## Story 1\nSituation: ...")
@@ -97,10 +89,6 @@ class TestStoryBankWrite:
         _story_bank_write(tmp_path, "## Story")
         assert (tmp_path / "data" / "story-bank.md").exists()
 
-
-# ---------------------------------------------------------------------------
-# _profile_write
-# ---------------------------------------------------------------------------
 
 class TestProfileWrite:
     def test_creates_config_dir_if_missing(self, tmp_path):
@@ -130,10 +118,6 @@ class TestProfileWrite:
         with pytest.raises(ValueError, match="empty"):
             _profile_write(tmp_path, "   ")
 
-
-# ---------------------------------------------------------------------------
-# _profile_load
-# ---------------------------------------------------------------------------
 
 class TestProfileLoad:
     def test_missing_both_files(self, tmp_path):

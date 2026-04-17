@@ -4,9 +4,6 @@ import pytest
 from huntsman_mcp.converter import _sanitize, _build_html, _link_sub
 import re
 
-# ---------------------------------------------------------------------------
-# _sanitize
-# ---------------------------------------------------------------------------
 
 class TestSanitize:
     def test_strips_bold(self):
@@ -59,10 +56,6 @@ class TestSanitize:
         assert result.strip() == ""
 
 
-# ---------------------------------------------------------------------------
-# _link_sub (the Markdown link handler)
-# ---------------------------------------------------------------------------
-
 _RE_LINK = re.compile(r"\[([^\]]+)\]\(([^)]*)\)")
 
 def _apply_link_sub(text: str) -> str:
@@ -92,10 +85,6 @@ class TestLinkSub:
         assert "My Portfolio" in result
         assert "cassxbt.dev" in result
 
-
-# ---------------------------------------------------------------------------
-# _build_html (structural smoke tests — not pixel-perfect)
-# ---------------------------------------------------------------------------
 
 SAMPLE_RESUME = """\
 Jane Smith
