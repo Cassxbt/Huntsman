@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from huntsman_mcp.server import _profile_load, _tracker_write, _story_bank_write
+from huntsman_mcp.server import _profile_load, _profile_write, _tracker_write, _story_bank_write
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +96,39 @@ class TestStoryBankWrite:
         assert not (tmp_path / "data").exists()
         _story_bank_write(tmp_path, "## Story")
         assert (tmp_path / "data" / "story-bank.md").exists()
+
+
+# ---------------------------------------------------------------------------
+# _profile_write
+# ---------------------------------------------------------------------------
+
+class TestProfileWrite:
+    def test_creates_config_dir_if_missing(self, tmp_path):
+        assert not (tmp_path / "config").exists()
+        _profile_write(tmp_path, "name: Cass\n")
+        assert (tmp_path / "config" / "profile.yml").exists()
+
+    def test_writes_content(self, tmp_path):
+        _profile_write(tmp_path, "name: Cass\narchetype: builder\n")
+        content = (tmp_path / "config" / "profile.yml").read_text()
+        assert "name: Cass" in content
+        assert "archetype: builder" in content
+
+    def test_returns_profile_path(self, tmp_path):
+        result = _profile_write(tmp_path, "name: Cass\n")
+        assert "profile.yml" in result["profile_path"]
+
+    def test_overwrites_existing_file(self, tmp_path):
+        (tmp_path / "config").mkdir()
+        (tmp_path / "config" / "profile.yml").write_text("name: Old\n")
+        _profile_write(tmp_path, "name: New\n")
+        content = (tmp_path / "config" / "profile.yml").read_text()
+        assert "New" in content
+        assert "Old" not in content
+
+    def test_empty_content_raises(self, tmp_path):
+        with pytest.raises(ValueError, match="empty"):
+            _profile_write(tmp_path, "   ")
 
 
 # ---------------------------------------------------------------------------

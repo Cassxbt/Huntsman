@@ -8,6 +8,7 @@ Tools exposed:
     search_linkedin_people — people/recruiter search
     convert_resume         — Markdown → PDF or DOCX
     load_profile           — read config/profile.yml and cv.md from project root
+    write_profile          — write config/profile.yml from onboarding interview answers
     write_tracker          — append/update a row in data/applications.md
     write_story_bank       — append STAR+R stories to data/story-bank.md
     search_reddit          — search Reddit posts (salary, interviews, reviews)
@@ -431,6 +432,16 @@ def _profile_load(project: "Path") -> dict[str, Any]:
     return result
 
 
+def _profile_write(project: "Path", yaml_content: str) -> dict[str, Any]:
+    if not yaml_content.strip():
+        raise ValueError("yaml_content is empty.")
+    config_dir = project / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    profile_path = config_dir / "profile.yml"
+    profile_path.write_text(yaml_content.strip() + "\n", encoding="utf-8")
+    return {"profile_path": str(profile_path)}
+
+
 def _tracker_write(
     project: "Path",
     company: str,
@@ -521,6 +532,33 @@ async def load_profile(ctx: Context) -> dict[str, Any]:
         missing (list of filenames that do not exist yet — triggers onboarding).
     """
     return _profile_load(get_project_dir())
+
+
+@mcp.tool(
+    title="Write Profile",
+    annotations={"readOnlyHint": False},
+)
+async def write_profile(
+    yaml_content: str,
+    ctx: Context,
+) -> dict[str, Any]:
+    """Write the user's profile to config/profile.yml.
+
+    Call this at the end of the onboarding interview once you have collected
+    all answers. Pass the complete YAML content as a string — the tool creates
+    the config directory if it does not exist and overwrites any existing file.
+
+    Args:
+        yaml_content: Full YAML content to write, matching the structure of
+                      config/profile.example.yml.
+
+    Returns:
+        Dict with profile_path (absolute path to the written file).
+    """
+    try:
+        return _profile_write(get_project_dir(), yaml_content)
+    except ValueError as exc:
+        raise ToolError(str(exc)) from exc
 
 
 @mcp.tool(
