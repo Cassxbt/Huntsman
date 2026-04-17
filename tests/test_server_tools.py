@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from huntsman_mcp.server import _profile_load, _profile_write, _tracker_write, _story_bank_write
+from huntsman_mcp.server import _cv_write, _profile_load, _profile_write, _tracker_write, _story_bank_write
 
 
 class TestTrackerWrite:
@@ -88,6 +88,32 @@ class TestStoryBankWrite:
         assert not (tmp_path / "data").exists()
         _story_bank_write(tmp_path, "## Story")
         assert (tmp_path / "data" / "story-bank.md").exists()
+
+
+class TestCvWrite:
+    def test_creates_cv_md(self, tmp_path):
+        _cv_write(tmp_path, "# Jane Smith\nSenior Engineer\n")
+        assert (tmp_path / "cv.md").exists()
+
+    def test_writes_content(self, tmp_path):
+        _cv_write(tmp_path, "# Jane Smith\nBuilt payment systems.\n")
+        content = (tmp_path / "cv.md").read_text()
+        assert "Built payment systems" in content
+
+    def test_returns_cv_path(self, tmp_path):
+        result = _cv_write(tmp_path, "# Jane\n")
+        assert "cv.md" in result["cv_path"]
+
+    def test_overwrites_existing_file(self, tmp_path):
+        (tmp_path / "cv.md").write_text("# Old CV\n")
+        _cv_write(tmp_path, "# New CV\n")
+        content = (tmp_path / "cv.md").read_text()
+        assert "New CV" in content
+        assert "Old CV" not in content
+
+    def test_empty_content_raises(self, tmp_path):
+        with pytest.raises(ValueError, match="empty"):
+            _cv_write(tmp_path, "   ")
 
 
 class TestProfileWrite:

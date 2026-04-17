@@ -9,6 +9,7 @@ Tools exposed:
     convert_resume         — Markdown → PDF or DOCX
     load_profile           — read config/profile.yml and cv.md from project root
     write_profile          — write config/profile.yml from onboarding interview answers
+    write_cv               — write cv.md from onboarding experience interview
     write_tracker          — append/update a row in data/applications.md
     write_story_bank       — append STAR+R stories to data/story-bank.md
     search_reddit          — search Reddit posts (salary, interviews, reviews)
@@ -504,6 +505,14 @@ def _tracker_write(
     }
 
 
+def _cv_write(project: "Path", markdown_content: str) -> dict[str, Any]:
+    if not markdown_content.strip():
+        raise ValueError("markdown_content is empty.")
+    cv_path = project / "cv.md"
+    cv_path.write_text(markdown_content.strip() + "\n", encoding="utf-8")
+    return {"cv_path": str(cv_path)}
+
+
 def _story_bank_write(project: "Path", story_markdown: str) -> dict[str, Any]:
     story_path = project / "data" / "story-bank.md"
     story_path.parent.mkdir(parents=True, exist_ok=True)
@@ -557,6 +566,32 @@ async def write_profile(
     """
     try:
         return _profile_write(get_project_dir(), yaml_content)
+    except ValueError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+@mcp.tool(
+    title="Write CV",
+    annotations={"readOnlyHint": False},
+)
+async def write_cv(
+    markdown_content: str,
+    ctx: Context,
+) -> dict[str, Any]:
+    """Write the user's CV to cv.md in the project root.
+
+    Call this at the end of the CV interview during onboarding. Pass the
+    complete Markdown resume — the tool writes it to cv.md and overwrites
+    any existing file.
+
+    Args:
+        markdown_content: Full resume in Huntsman Markdown format.
+
+    Returns:
+        Dict with cv_path (absolute path to the written file).
+    """
+    try:
+        return _cv_write(get_project_dir(), markdown_content)
     except ValueError as exc:
         raise ToolError(str(exc)) from exc
 

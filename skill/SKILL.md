@@ -48,6 +48,7 @@ If `huntsman-mcp` is installed and configured:
 **Profile and tracker (local file I/O — always use these instead of reading files directly):**
 - `load_profile()` — reads config/profile.yml and cv.md; returns both as strings plus a `missing` list
 - `write_profile(yaml_content)` — writes config/profile.yml; call this at the end of the onboarding interview
+- `write_cv(markdown_content)` — writes cv.md; call this at the end of the CV interview during onboarding
 - `write_tracker(company, role, score, status, notes, report_markdown)` — appends/updates a row in data/applications.md
 - `write_story_bank(story_markdown)` — appends STAR+R stories to data/story-bank.md
 
@@ -84,7 +85,7 @@ Based on the user's message, route to the appropriate mode:
 | "Research [company]" or asks about a company | Read `skill/modes/research.md` and follow it |
 | "Prep for interview" or mentions interview | Read `skill/modes/interview.md` and follow it |
 | "Reach out to" or "cold email" or "message" | Read `skill/modes/outreach.md` and follow it |
-| "Audit my LinkedIn" or "optimize my profile" | Run the **LinkedIn Profile Audit** below |
+| "Audit my LinkedIn" or "optimize my profile" | Read `skill/modes/audit.md` and follow it |
 | "Tailor my resume" or "write a resume" | Run the **Resume Tailoring** below |
 | "Write a cover letter" | Run the **Cover Letter** below |
 | "Is this job a good fit?" or "assess fit" | Route to evaluate mode (produces a fit assessment as part of the evaluation) |
@@ -136,89 +137,6 @@ Confirm understanding before proceeding:
 Before tailoring any resume, writing any cover letter, or assessing job fit, run company research. Read `skill/modes/research.md` and follow the full procedure defined there.
 
 If MCP tools are unavailable, ask the user to paste the company's LinkedIn About section and skip the Reddit enrichment steps.
-
----
-
-## LinkedIn Profile Audit
-
-**Pull the live profile first:**
-```
-get_linkedin_profile(linkedin_username, sections="experience,education,skills,contact_info,honors")
-```
-
-**Audit every section. For each:**
-- State the current content (verbatim if short)
-- State the gap
-- Assign priority: P0 (critical), P1 (high impact), P2 (improvement)
-- Provide paste-ready replacement copy
-
-**HEADLINE (P0 if wrong)**
-- 220-character limit. Use every character for keyword density.
-- Pattern: `[Primary Role] | [Top Tech Keywords] | [Domain] | [Credibility Signal]`
-- Must contain recruiter search keywords. Generic titles do not rank.
-
-**ABOUT (P0 if empty)**
-- Min 40 words for All-Star status (required for full recruiter search visibility).
-- LinkedIn's ranking system classifies expertise from this section. Write about your actual specialty, not a generic summary.
-- Structure: 1 positioning sentence, 3-5 achievement bullets with numbers, tech stack sentence, open to [roles] (remote), contact email.
-- No filler language. Numbers beat adjectives. No em dashes. No AI-pattern language.
-
-**EXPERIENCE (P0 if empty or generic titles)**
-- Every role needs a description.
-- Bullets: [Strong Verb] + [What] + [Quantified Outcome]
-- Strong verbs: Architected, Built, Deployed, Engineered, Implemented, Integrated, Shipped, Scaled
-- Freelance/contract counts. Label it.
-- No em dashes. No passive voice.
-
-**SKILLS (P1)**
-- 5+ skills materially increases recruiter search visibility — LinkedIn ranks fuller profiles higher.
-- Top 3 pinned skills appear on profile card. Pin highest-demand keywords.
-- LinkedIn Recruiter has a "passed skill assessment" filter.
-- Priority assessments: JavaScript, React.js, TypeScript, Python, Node.js, Git
-
-**OPEN TO WORK (P1 if job-seeking)**
-- Signals active availability to recruiters — use Recruiters Only to avoid alerting current employer.
-- Location: always "Remote" when targeting international roles.
-- List specific job titles matching recruiter search terms.
-
-**EDUCATION (P1 if empty)**
-- Required for All-Star status.
-
-**FEATURED (P1)**
-- First item gets ~80% of clicks. Order by strategic priority.
-- 4-6 items max. Best performers: GitHub, live project demo, prize certificate.
-
-**PROFILE URL (P2)** — Change from default ID-number URL to linkedin.com/in/yourname.
-**VERIFICATION BADGE (P2)** — Adds a trust signal; LinkedIn surfaces verified profiles more consistently in search.
-
-**CONNECTIONS (P2)**
-- Below 500 = smaller 2nd-degree pool.
-- Build order: recruiters in your domain first, then developers at target companies.
-
-**ACTIVITY (P2)**
-- LinkedIn's algorithm classifies expertise from posts — posting off-niche suppresses reach in your target domain.
-- Native documents and carousels consistently outperform external link posts in organic reach.
-- Post 2-4x per week; never more than once per 24 hours. Mid-week mornings perform best.
-- Put external links in the first comment, not the post body — LinkedIn deprioritizes posts that push users off-platform.
-- Feed weight: Saves (highest) > Dwell time > See more > Comments > Shares > Likes (lowest)
-
-**Output format:**
-```
-## LinkedIn Audit: @[username]
-Pulled: [date]
-
-### CRITICAL (P0)
-[list]
-
-### SECTION REPORT
-[each section: Current → Issue → Fix]
-
-### ALL-STAR CHECKLIST
-- [ ] Photo  - [ ] Banner  - [ ] Headline  - [ ] About  - [ ] Experience  - [ ] Skills  - [ ] Education
-
-### ESTIMATED IMPACT
-[Which fixes unlock the most recruiter visibility]
-```
 
 ---
 
@@ -276,26 +194,3 @@ Pulled: [date]
 - Address a specific person if provided.
 - Test: read it out loud. If it sounds human, it passes.
 
----
-
-## Recruiter Boolean Search Reference
-
-Example patterns recruiters use in LinkedIn Recruiter. Adapt to the user's target roles:
-```
-("[primary skill]" OR "[related skill]") AND ("developer" OR "engineer") NOT junior
-("[domain]" OR "[related domain]") AND ("[framework]" OR "[language]")
-("[specialty]" OR "[alternate term]") AND ("engineer" OR "developer")
-```
-
----
-
-## LinkedIn Profile SEO Reference
-
-| Section | Search Weight |
-|---|---|
-| Headline | Highest |
-| Current job title | Very high |
-| Skills section | High |
-| About section | High |
-| Experience descriptions | Medium-high |
-| Education | Medium |
