@@ -3,6 +3,7 @@
 MCP server for score-gated job hunting — scrapes LinkedIn and Reddit, converts resumes, and only generates tailored materials for roles that clear the 10-dimension threshold.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/Cassxbt/Huntsman/ci.yml?style=flat-square&label=CI)](https://github.com/Cassxbt/Huntsman/actions)
 [![PyPI](https://img.shields.io/pypi/v/huntsman-mcp?style=flat-square&label=PyPI)](https://pypi.org/project/huntsman-mcp/)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 
@@ -20,7 +21,7 @@ Job searching is a volume game played badly. Huntsman flips that: it scores ever
 - **Reddit intelligence** — pulls salary threads, interview reports, and company reviews from cscareerquestions, ExperiencedDevs, and domain subreddits; no authentication required
 - **ATS-compliant resume conversion** — converts Markdown to PDF (Chromium) or DOCX (python-docx), single-column layout, selectable UTF-8 text, standard section headers; DOCX for ATS portals, PDF for direct sends
 - **Persistent session tools** — `load_profile`, `write_tracker`, and `write_story_bank` keep your profile, application log, and STAR+R story bank consistent across sessions without relying on the LLM to write files correctly
-- **72 passing tests** — scraper helpers, converter sanitizer, and all file I/O tools covered
+- **82 passing tests** — scraper helpers, converter sanitizer, and all file I/O tools covered
 
 ## Architecture
 
