@@ -2,6 +2,7 @@
 
 import pytest
 from huntsman_mcp.scraper import (
+    _is_expand_control,
     _lookup,
     _normalize_csv_filter,
     _path_matches_prefix,
@@ -141,3 +142,20 @@ class TestStripNoise:
         assert "Architected systems" in result
         assert "Play" not in result
         assert "Pause" not in result
+
+
+class TestIsExpandControl:
+    def test_accepts_see_more_labels(self):
+        assert _is_expand_control("See more about Stripe", None)
+
+    def test_accepts_show_all_labels(self):
+        assert _is_expand_control("Show all 12 employees", None)
+
+    def test_accepts_inline_show_more_class(self):
+        assert _is_expand_control(None, "foo inline-show-more-text__button bar")
+
+    def test_rejects_generic_more_label(self):
+        assert not _is_expand_control("More", None)
+
+    def test_rejects_non_expand_more_label(self):
+        assert not _is_expand_control("More reactions", None)

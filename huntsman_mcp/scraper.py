@@ -139,6 +139,20 @@ def _lookup(value: str, mapping: dict[str, str], filter_name: str) -> str:
     return mapping[value]
 
 
+def _is_expand_control(aria_label: str | None, class_name: str | None) -> bool:
+    """Return True only for controls that expand truncated text in-place."""
+    label = (aria_label or "").strip().lower()
+    classes = (class_name or "").strip().lower()
+
+    if "inline-show-more-text__button" in classes:
+        return True
+
+    return any(
+        phrase in label
+        for phrase in ("see more", "show more", "show all")
+    )
+
+
 def _normalize_csv_filter(value: str, mapping: dict[str, str], filter_name: str) -> str:
     """Map a comma-separated list of human-readable filter names to LinkedIn
     URL parameter values. Raises ScrapingError if any value is unknown.
@@ -307,17 +321,13 @@ async def _expand_truncated_content(page: Page) -> None:
     LinkedIn truncates long About sections, experience descriptions, etc.
     We expand everything before extracting innerText.
     """
-    # These aria-label patterns are more stable than class names.
-    selector = (
-        "button[aria-label*='see more'], "
-        "button[aria-label*='Show all'], "
-        "button[aria-label*='show more'], "
-        "button.inline-show-more-text__button, "
-        "span[role='button'][aria-label*='more']"
-    )
-    buttons = await page.query_selector_all(selector)
+    buttons = await page.query_selector_all("button, span[role='button']")
     for btn in buttons:
         try:
+            aria_label = await btn.get_attribute("aria-label")
+            class_name = await btn.get_attribute("class")
+            if not _is_expand_control(aria_label, class_name):
+                continue
             if await btn.is_visible():
                 await btn.click()
                 await _jitter_sleep(CLICK_DELAY, CLICK_JITTER)
@@ -525,7 +535,6 @@ async def scrape_company(identifier: str) -> dict[str, Any]:
             expected_path_prefix=f"/company/{identifier}",
         )
         await _scroll_to_bottom(page)
-        await _expand_truncated_content(page)
 
         main_text = await _page_inner_text(page, "main")
         if not main_text:
