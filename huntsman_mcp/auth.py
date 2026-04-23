@@ -11,7 +11,7 @@ import time
 
 from huntsman_mcp.browser import close_context, get_context
 from huntsman_mcp.config import LI_BASE
-from huntsman_mcp.exceptions import AuthRequired
+from huntsman_mcp.exceptions import AuthRequired, BrowserSetupError
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,11 @@ _CHECK_TIMEOUT_MS = 20_000
 # tool call. 5 minutes is conservative — LinkedIn sessions last weeks.
 _SESSION_TTL = 300.0
 _session_valid_until: float = 0.0
+
+
+def _looks_logged_in_url(url: str) -> bool:
+    """Return True when the current LinkedIn URL indicates an authenticated session."""
+    return "feed" in url and "authwall" not in url and "login" not in url
 
 
 async def is_logged_in() -> bool:
@@ -38,9 +43,11 @@ async def is_logged_in() -> bool:
             await page.goto(_FEED_URL, wait_until="domcontentloaded", timeout=_CHECK_TIMEOUT_MS)
             await asyncio.sleep(1.0)
             url = page.url
-            return "feed" in url and "authwall" not in url and "login" not in url
+            return _looks_logged_in_url(url)
         finally:
             await page.close()
+    except BrowserSetupError:
+        raise
     except Exception as exc:
         logger.debug("Session check failed: %s", exc)
         return False
@@ -94,6 +101,8 @@ async def run_login() -> None:
     print("This window will close automatically once login is detected.")
     print("(Or press Ctrl+C here to cancel.)\n")
 
+    login_detected = False
+
     try:
         # Poll for up to 5 minutes for a successful login.
         for _ in range(300):
@@ -103,8 +112,8 @@ async def run_login() -> None:
             except Exception:
                 # Page was closed externally.
                 break
-            if "feed" in url and "authwall" not in url and "login" not in url:
-                print("Login detected. Session saved.")
+            if _looks_logged_in_url(url):
+                login_detected = True
                 break
         else:
             print(
@@ -125,15 +134,41 @@ async def run_login() -> None:
     global _session_valid_until
     _session_valid_until = 0.0
 
+    if login_detected:
+        try:
+            if await is_logged_in():
+                print("Login detected. Session saved and verified.")
+            else:
+                print(
+                    "Login detected, but Huntsman could not verify the saved session after "
+                    "closing the browser. Run `huntsman-mcp --status` in a few seconds. "
+                    "If it still fails, rerun `huntsman-mcp --login`.",
+                    file=sys.stderr,
+                )
+        except BrowserSetupError as exc:
+            print(
+                "Login detected, but Huntsman could not verify the saved session automatically: "
+                f"{exc}",
+                file=sys.stderr,
+            )
+        finally:
+            await close_context()
+
     print("Run `huntsman-mcp --status` to verify the session is active.\n")
 
 
 async def print_status() -> None:
     """Print the current authentication status to stdout."""
     print("Checking LinkedIn session...", end=" ", flush=True)
-    logged_in = await is_logged_in()
-    if logged_in:
-        print("Active. Session is valid.")
+    try:
+        logged_in = await is_logged_in()
+    except BrowserSetupError as exc:
+        print(f"Browser check failed: {exc}", file=sys.stderr)
+        await close_context()
+        raise SystemExit(1) from exc
     else:
-        print("Not logged in. Run `huntsman-mcp --login` to authenticate.")
-    await close_context()
+        if logged_in:
+            print("Active. Session is valid.")
+        else:
+            print("Not logged in. Run `huntsman-mcp --login` to authenticate.")
+        await close_context()
