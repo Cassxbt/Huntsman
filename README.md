@@ -21,7 +21,7 @@ Job searching is a volume game played badly. Huntsman flips that: it scores ever
 - **Reddit intelligence** — pulls salary threads, interview reports, and company reviews from cscareerquestions, ExperiencedDevs, and domain subreddits; no authentication required
 - **ATS-compliant resume conversion** — converts Markdown to PDF (Chromium) or DOCX (python-docx), single-column layout, selectable UTF-8 text, standard section headers; DOCX for ATS portals, PDF for direct sends
 - **Persistent session tools** — `load_profile`, `write_tracker`, and `write_story_bank` keep your profile, application log, and STAR+R story bank consistent across sessions without relying on the LLM to write files correctly
-- **82 passing tests** — scraper helpers, converter sanitizer, and all file I/O tools covered
+- **91 passing tests** — auth flows, scraper helpers, company-page regressions, converter sanitizer, and file I/O tools covered
 
 ## Architecture
 
@@ -172,6 +172,30 @@ This tool scrapes LinkedIn using your own account session. LinkedIn's Terms of S
 ## Contributing
 
 Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change.
+
+## Releases
+
+PyPI publishing is tag-driven via [`.github/workflows/publish.yml`](.github/workflows/publish.yml).
+
+Common commands:
+
+```bash
+make test
+make build
+make release VERSION=0.2.1
+make release-patch
+```
+
+What `make release ...` does:
+
+1. Verifies the git worktree is clean and you are on `main`
+2. Bumps the version in `pyproject.toml` and `huntsman_mcp/__init__.py`
+3. Runs the full test suite
+4. Builds the sdist and wheel
+5. Creates a release commit and tag `vX.Y.Z`
+6. Pushes `main` and the tag
+
+Pushing the tag triggers the GitHub publish workflow, which uploads the new package to PyPI.
 
 ## License
 
